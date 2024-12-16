@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  AWAITING_SHIPMENT
+  IN_GRADING
+  GRADING_COMPLETE
+  SHIPPED_BACK
+}
+
+enum PaymentStatus {
+  PAID
+  UNPAID
+  NO_PAYMENT_REQUIRED
+}
+
+enum Carrier {
+  USPS
+  UPS
+  FEDEX
+  DHL
+  OTHER
+}
+
+enum ServiceType {
+  ECONOMY
+  CORE
+  BULK
+}
+
+model Order {
+  id             String           @id @default(uuid(7)) @db.Uuid
+  public_id      String           @unique @default(nanoid())
+  userId         String
+  status         OrderStatus      @default(PENDING_PAYMENT)
+  serviceType    ServiceType
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @default(now()) @updatedAt
+  payment        Payment?
+  statusTracking StatusTracking[]
+  pieces         Piece[]
+}
+
+model Piece {
+  id           String   @id @default(uuid(7)) @db.Uuid
+  serialNumber Int      @unique @default(autoincrement()) @db.Integer
+  userId       String
+  orderId      String   @db.Uuid
+  name         String
+  images       String[]
+  grade        Int?
+  description  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+  order        Order    @relation(fields: [orderId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+}
+
+model Payment {
+  id              String        @id @default(uuid(7)) @db.Uuid
+  orderId         String        @unique @db.Uuid
+  stripeSessionId String
+  amount          Int           @db.Integer
+  currency        String
+  status          PaymentStatus
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @default(now()) @updatedAt
+  order           Order         @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model StatusTracking {
+  id           String   @id @default(uuid(7)) @db.Uuid
+  orderId      String   @db.Uuid
+  status       String
+  description  String?
+  createdAt    DateTime @default(now())
+  trackingCode String?
+  carrier      Carrier?
+  order        Order    @relation(fields: [orderId], references: [id])
+}

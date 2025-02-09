@@ -56,6 +56,7 @@ model Piece {
   name         String
   images       String[]
   grade        Int?
+  isPristine   Boolean @default(false)
   description  String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @default(now()) @updatedAt
@@ -82,5 +83,5 @@ model StatusTracking {
   createdAt    DateTime @default(now())
   trackingCode String?
   carrier      Carrier?
-  order        Order    @relation(fields: [orderId], references: [id])
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 }

@@ -9,6 +9,8 @@ import { AuthService } from './auth/auth.service';
 import { ClerkModule } from './clerk/clerk.module';
 import { S3Module } from './s3/s3.module';
 import { StripeModule } from './stripe/stripe.module';
+import { FiguresModule } from './figures/figures.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -21,6 +23,8 @@ import { StripeModule } from './stripe/stripe.module';
     ClerkModule,
     S3Module,
     StripeModule,
+    FiguresModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService, AuthService],

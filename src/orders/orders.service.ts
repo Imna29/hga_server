@@ -7,6 +7,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { extname } from "path";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { Piece } from "@prisma/client";
 
 @Injectable()
 export class OrdersService {
@@ -142,7 +143,7 @@ export class OrdersService {
     return this.generateSignedUrls(pieces);
   }
 
-  private async generateSignedUrls(pieces: any[]) {
+  private async generateSignedUrls(pieces: Piece[]) {
     for (const piece of pieces) {
       const signedUrls = await Promise.all(
         piece.images.map(async (imageKey: string) => {

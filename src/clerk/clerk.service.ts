@@ -1,6 +1,6 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { env } from 'process';
-import { ClerkClient, createClerkClient } from '@clerk/backend';
+import { Injectable, OnModuleInit } from "@nestjs/common";
+import { env } from "process";
+import { ClerkClient, createClerkClient } from "@clerk/backend";
 
 @Injectable()
 export class ClerkService implements OnModuleInit {

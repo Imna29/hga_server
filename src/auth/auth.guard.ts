@@ -9,6 +9,8 @@ import { ClerkService } from "../clerk/clerk.service";
 
 export const IS_PUBLIC_KEY = "isPublic";
 export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);
+export const IS_ADMIN_KEY = "isAdmin";
+export const Admin = () => SetMetadata(IS_ADMIN_KEY, true);
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -19,6 +21,10 @@ export class AuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    const isAdmin = this.reflector.getAllAndOverride<boolean>(IS_ADMIN_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
@@ -47,8 +53,13 @@ export class AuthGuard implements CanActivate {
       });
       const requestState =
         await this.clerkService.client.authenticateRequest(newRequest);
-
       const userId = requestState.toAuth().userId;
+      if (isAdmin) {
+        const user = await this.clerkService.client.users.getUser(userId);
+        if (!user.publicMetadata.isAdmin) {
+          return false;
+        }
+      }
       request["userId"] = userId;
       return !userId ? false : true;
     } catch (error) {

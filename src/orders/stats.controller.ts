@@ -58,11 +58,6 @@ export class StatsController {
               AND: [
                 {
                   NOT: {
-                    status: OrderStatus.SHIPPED_BACK,
-                  },
-                },
-                {
-                  NOT: {
                     status: OrderStatus.PENDING_PAYMENT,
                   },
                 },

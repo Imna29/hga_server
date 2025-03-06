@@ -78,12 +78,13 @@ export class AdminService {
     });
   }
 
-  async addStatusUpdate(id: string, status: string, description: string) {
+  async addStatusUpdate(id: string, status: string, description: string, trackingCode: string) {
     return this.prismaService.statusTracking.create({
       data: {
         orderId: id,
         status,
         description,
+        trackingCode,
       },
     });
   }

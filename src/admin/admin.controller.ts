@@ -24,8 +24,8 @@ export class AdminController {
   }
 
   @Post("orders/:id/status-update")
-  async addStatusUpdate(@Param("id") id: string, @Body() body: { status: string, description: string }) {
-    return this.adminService.addStatusUpdate(id, body.status, body.description);
+  async addStatusUpdate(@Param("id") id: string, @Body() body: { status: string, description: string, trackingCode: string }) {
+    return this.adminService.addStatusUpdate(id, body.status, body.description, body.trackingCode);
   }
 
   @Patch("/figures/:id/grade")

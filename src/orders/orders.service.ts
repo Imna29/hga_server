@@ -82,6 +82,7 @@ export class OrdersService {
             userId: userId,
             description: item.description,
             images: processedImages,
+            declaredValue: item.declaredValue,
           },
         },
       },

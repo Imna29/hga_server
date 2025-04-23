@@ -1,4 +1,12 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { Transform } from "class-transformer";
+import {
+  IsInt,
+  IsNotEmpty,
+  IsNumber,
+  IsNumberString,
+  IsOptional,
+  IsString,
+} from "class-validator";
 
 export class CreateOrderItemDto {
   @IsString()
@@ -9,6 +17,10 @@ export class CreateOrderItemDto {
   @IsNotEmpty()
   @IsOptional()
   description?: string;
+
+  @Transform(({ value }) => Number(value))
+  @IsInt()
+  declaredValue: number;
 
   images: any;
 }

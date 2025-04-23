@@ -1,13 +1,18 @@
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Injectable } from "@nestjs/common";
+import { createId } from "@paralleldrive/cuid2";
 import { OrderStatus, Piece } from "@prisma/client";
+import { extname } from "path";
 import { PrismaService } from "src/prisma/prisma.service";
 import { S3Service } from "src/s3/s3.service";
 
 @Injectable()
 export class AdminService {
-  constructor(private readonly prismaService: PrismaService, private readonly s3Service:S3Service) { }
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly s3Service: S3Service,
+  ) {}
 
   async getOrders() {
     return this.prismaService.order.findMany({
@@ -39,9 +44,9 @@ export class AdminService {
       },
       include: {
         pieces: {
-          orderBy:{
+          orderBy: {
             createdAt: "desc",
-          }
+          },
         },
         statusTracking: {
           orderBy: {
@@ -78,7 +83,12 @@ export class AdminService {
     });
   }
 
-  async addStatusUpdate(id: string, status: string, description: string, trackingCode: string) {
+  async addStatusUpdate(
+    id: string,
+    status: string,
+    description: string,
+    trackingCode: string,
+  ) {
     return this.prismaService.statusTracking.create({
       data: {
         orderId: id,
@@ -117,5 +127,26 @@ export class AdminService {
       figure.images = signedUrls;
     }
     return figures;
+  }
+
+  async updateCertificate(figureId: string, file: Express.Multer.File) {
+    const uploadedCertificate = await this.uploadCertificate(file);
+
+    return this.prismaService.piece.update({
+      where: {
+        id: figureId,
+      },
+      data: {
+        certificate: uploadedCertificate,
+      },
+    });
+  }
+
+  private async uploadCertificate(file: Express.Multer.File): Promise<string> {
+    const uniqueSuffix = createId();
+    const filename = `${file.fieldname}-${uniqueSuffix}${extname(file.originalname)}`;
+    await this.s3Service.uploadFile("certificates", filename, file.buffer);
+
+    return filename;
   }
 }

@@ -1,9 +1,9 @@
-import { IsIn, IsNumber, IsString, Max, Min } from 'class-validator';
+import { ServiceType } from "@prisma/client";
+import { IsIn, IsNumber, IsString, Max, Min } from "class-validator";
 
 export class CreateOrderDto {
   @IsString()
-  @IsIn(['ECONOMY', 'CORE', 'BULK'])
-  type: 'ECONOMY' | 'CORE' | 'BULK';
+  type: ServiceType;
 
   @IsNumber({
     maxDecimalPlaces: 0,

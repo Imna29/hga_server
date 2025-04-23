@@ -1,7 +1,17 @@
-import { Body, Controller, Get, Param, Patch, Post } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UploadedFile,
+  UseInterceptors,
+} from "@nestjs/common";
 import { AdminService } from "./admin.service";
 import { Admin } from "src/auth/auth.guard";
 import { OrderStatus } from "@prisma/client";
+import { FileInterceptor } from "@nestjs/platform-express";
 
 @Controller("admin")
 @Admin()
@@ -19,17 +29,40 @@ export class AdminController {
   }
 
   @Patch("orders/:id/status")
-  async updateOrderStatus(@Param("id") id: string, @Body() body: { status: OrderStatus }) {
+  async updateOrderStatus(
+    @Param("id") id: string,
+    @Body() body: { status: OrderStatus },
+  ) {
     return this.adminService.updateOrderStatus(id, body.status);
   }
 
   @Post("orders/:id/status-update")
-  async addStatusUpdate(@Param("id") id: string, @Body() body: { status: string, description: string, trackingCode: string }) {
-    return this.adminService.addStatusUpdate(id, body.status, body.description, body.trackingCode);
+  async addStatusUpdate(
+    @Param("id") id: string,
+    @Body() body: { status: string; description: string; trackingCode: string },
+  ) {
+    return this.adminService.addStatusUpdate(
+      id,
+      body.status,
+      body.description,
+      body.trackingCode,
+    );
   }
 
   @Patch("/figures/:id/grade")
-  async updateGrade(@Param("id") id: string, @Body() body: { grade: number, isPristine: boolean }) {
+  async updateGrade(
+    @Param("id") id: string,
+    @Body() body: { grade: number; isPristine: boolean },
+  ) {
     return this.adminService.updatePieceGrade(id, body.grade, body.isPristine);
+  }
+
+  @Post("figures/:id/certificate")
+  @UseInterceptors(FileInterceptor("certificate"))
+  async uploadCertificate(
+    @Param("id") id: string,
+    @UploadedFile() certificate: Express.Multer.File,
+  ) {
+    return this.adminService.updateCertificate(id, certificate);
   }
 }

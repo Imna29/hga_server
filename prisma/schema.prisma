@@ -30,9 +30,12 @@ enum Carrier {
 }
 
 enum ServiceType {
-  ECONOMY
-  CORE
   BULK
+  VALUE
+  CORE
+  PLUS
+  PREMIUM
+  ULTIMATE
 }
 
 model Order {
@@ -49,18 +52,20 @@ model Order {
 }
 
 model Piece {
-  id           String   @id @default(uuid(7)) @db.Uuid
-  serialNumber Int      @unique @default(autoincrement()) @db.Integer
-  userId       String
-  orderId      String   @db.Uuid
-  name         String
-  images       String[]
-  grade        Int?
-  isPristine   Boolean @default(false)
-  description  String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @default(now()) @updatedAt
-  order        Order    @relation(fields: [orderId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+  id            String   @id @default(uuid(7)) @db.Uuid
+  serialNumber  Int      @unique @default(autoincrement()) @db.Integer
+  userId        String
+  orderId       String   @db.Uuid
+  name          String
+  images        String[]
+  declaredValue Int      @db.Integer
+  grade         Int?
+  isPristine    Boolean  @default(false)
+  description   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
+  certificate   String?
+  order         Order    @relation(fields: [orderId], references: [id], onUpdate: Cascade, onDelete: Cascade)
 }
 
 model Payment {

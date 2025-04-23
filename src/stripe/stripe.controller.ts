@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Headers,
+  NotFoundException,
   Post,
   RawBodyRequest,
   Req,
@@ -14,6 +15,7 @@ import Stripe from "stripe";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
 import { Request } from "express";
 import { Public } from "src/auth/auth.guard";
+import { SERVICE_DETAILS_MAP } from "../utils/pricing";
 
 @Controller("stripe")
 export class StripeController {
@@ -26,11 +28,26 @@ export class StripeController {
   async createCheckoutSession(
     @Body() createCheckoutSessionDto: CreateCheckoutSessionDto,
   ) {
-    const order = await this.prismaService.order.findFirst({
+    const order = await this.prismaService.order.findUnique({
       where: {
         id: createCheckoutSessionDto.orderId,
       },
+      include: {
+        pieces: true,
+      },
     });
+
+    if (order === null) throw new NotFoundException("Order not found");
+    if (!order.pieces || order.pieces.length === 0) {
+      throw new BadRequestException("Order must contain at least one piece.");
+    }
+
+    const serviceDetails = SERVICE_DETAILS_MAP[order.serviceType];
+    if (!serviceDetails) {
+      throw new BadRequestException(
+        `Invalid service type: ${order.serviceType}`,
+      );
+    }
 
     const count = await this.prismaService.piece.count({
       where: {
@@ -38,30 +55,37 @@ export class StripeController {
       },
     });
 
-    let session: Stripe.Response<Stripe.Checkout.Session>;
+    const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
+    line_items.push({
+      price: serviceDetails.priceId,
+      quantity: order.pieces.length,
+    });
+    if (serviceDetails.commissionRate) {
+      let totalCommissionAmount = 0;
+      for (const piece of order.pieces) {
+        totalCommissionAmount += Math.round(
+          piece.declaredValue * serviceDetails.commissionRate,
+        );
+      }
 
-    if (order.serviceType === "BULK") {
-      session = await this.stripeService.createCheckoutSession([
-        {
-          price: "price_1QDZ9LCkQycn6ct2d3KmQbux",
-          quantity: count,
-        },
-      ]);
-    } else if (order.serviceType === "CORE") {
-      session = await this.stripeService.createCheckoutSession([
-        {
-          price: "price_1QDZ8RCkQycn6ct23JF7wYaH",
-          quantity: count,
-        },
-      ]);
-    } else if (order.serviceType === "ECONOMY") {
-      session = await this.stripeService.createCheckoutSession([
-        {
-          price: "price_1QDZ7fCkQycn6ct2N08UY1Ka",
-          quantity: count,
-        },
-      ]);
+      if (totalCommissionAmount > 0) {
+        line_items.push({
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: `Declared Value Commission (${
+                serviceDetails.commissionRate * 100
+              }%)`,
+              description: `Commission based on total declared value for ${order.pieces.length} items.`,
+            },
+            unit_amount: totalCommissionAmount,
+          },
+          quantity: 1,
+        });
+      }
     }
+
+    const session = await this.stripeService.createCheckoutSession(line_items);
 
     await this.prismaService.payment.upsert({
       where: {
